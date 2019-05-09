@@ -9,12 +9,23 @@ class TileGenerator {
   /// Gives number of tiles to be present in a certain zoom level
   int tileCountInZoomLevel() => pow(2 * 2, zoomLevel);
 
+  /// Generates only tile identifiers without extent value
+  /// Simply a List<String> is returned, where each entry of List is a String, identifies a certain tile
+  List<String> tilesWithOutExtent() {
+    if (zoomLevel == 0) return ['0-0'];
+    var tileCountAlongXOrY = sqrt(tileCountInZoomLevel()).toInt();
+    var tiles = <String>[];
+    for (var y = 0; y < tileCountAlongXOrY; y++)
+      for (var x = 0; x < tileCountAlongXOrY; x++) tiles.add('$x-$y');
+    return tiles;
+  }
+
   /// This is the method that you might be actually interested in using mostly
-  /// Generates all the tiles which can be present in a certain zoom level
+  /// Generates all the tiles along with their corresponding extents, which can be present in a certain zoom level
   /// Returns value in form of Map<String, List<double>>
   /// Keys of Map, used as tile identifier
   /// May be you'll be breaking a key using 'x-y'.split('-'), to get tileIdX and tileIdY in List<String> form.
-  Map<String, List<double>> tilesInZoomLevel() {
+  Map<String, List<double>> tilesWithExtent() {
     if (zoomLevel == 0)
       return {
         '0-0': [-180, -90, 180, 90]

@@ -6,3 +6,5 @@ repository: https://github.com/itzmeanjan/osm_tile_fetcher/
 publish_to: https://pub.dev/
 environment:
   sdk: ">=2.1.0 <3.0.0"
+dependencies:
+  path: ^1.6.2
