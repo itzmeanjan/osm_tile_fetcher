@@ -1,7 +1,7 @@
 // import 'dart:math' show Rectangle;
 import 'generator.dart';
 import 'dart:io';
-import 'dart:async' show Completer;
+import 'dart:async' show Completer, StreamController;
 import 'package:path/path.dart' show join;
 
 class TileFetcher {
@@ -16,18 +16,47 @@ class TileFetcher {
   TileFetcher(this.zoomLevel, this.targetPath);
 
   /// actual tile fetcher, for a certain zoom level fetches all tiles and stores them in targetDir, for caching purpose
-  fetchTiles({String baseURL = 'https://tile.openstreetmap.org/'}) =>
-      TileGenerator(zoomLevel).tilesWithOutExtent().forEach((tileId) =>
-          _tileFetcher(
-              '$baseURL/$zoomLevel/${tileId.split('-').join('/')}.png',
-              join(targetPath,
-                  '${zoomLevel}_${tileId.split('-').join('_')}.png')));
+  Stream<String> fetchTiles(
+      {String baseURL = 'https://tile.openstreetmap.org/'}) {
+    StreamController streamController;
+    int count = 0;
+
+    /// closes stream of data
+    close() {
+      if (!streamController.isClosed) streamController.close();
+    }
+
+    /// initializes stream and sends success report back
+    init() => TileGenerator(zoomLevel).tilesWithOutExtent().forEach(
+          (tileId) => _tileFetcher(
+                      '$baseURL/$zoomLevel/${tileId.split('_').join('/')}.png',
+                      join(targetPath,
+                          '${zoomLevel}_${tileId.split('_').join('_')}.png'))
+                  .then(
+                (val) {
+                  count += 1;
+                  if (!streamController.isClosed || !streamController.isPaused)
+                    streamController.add(val ? '${zoomLevel}_$tileId' : '');
+                  if (count == TileGenerator(zoomLevel).tileCountInZoomLevel())
+                    streamController.close();
+                },
+              ),
+        );
+    streamController = StreamController<String>(
+      onCancel: close,
+      onListen: init,
+    );
+    return streamController.stream;
+  }
 
   /// generates target URLs only, for a certain zoom level
   List<String> urlGenerator(
           {String baseURL = 'https://tile.openstreetmap.org'}) =>
-      TileGenerator(zoomLevel).tilesWithOutExtent().map((String tileId) =>
-          '$baseURL/$zoomLevel/${tileId.split('-').join('/')}');
+      TileGenerator(zoomLevel)
+          .tilesWithOutExtent()
+          .map((String tileId) =>
+              '$baseURL/$zoomLevel/${tileId.split('_').join('/')}.png')
+          .toList();
 
   /// fetches a tile from OSM and then stores in target file, when completes returns status of operation by a boolean value
   /// true --> success

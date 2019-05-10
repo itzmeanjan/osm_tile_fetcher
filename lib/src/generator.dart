@@ -12,11 +12,11 @@ class TileGenerator {
   /// Generates only tile identifiers without extent value
   /// Simply a List<String> is returned, where each entry of List is a String, identifies a certain tile
   List<String> tilesWithOutExtent() {
-    if (zoomLevel == 0) return ['0-0'];
+    if (zoomLevel == 0) return ['0_0'];
     var tileCountAlongXOrY = sqrt(tileCountInZoomLevel()).toInt();
     var tiles = <String>[];
     for (var y = 0; y < tileCountAlongXOrY; y++)
-      for (var x = 0; x < tileCountAlongXOrY; x++) tiles.add('$x-$y');
+      for (var x = 0; x < tileCountAlongXOrY; x++) tiles.add('${x}_$y');
     return tiles;
   }
 
@@ -28,7 +28,7 @@ class TileGenerator {
   Map<String, List<double>> tilesWithExtent() {
     if (zoomLevel == 0)
       return {
-        '0-0': [-180, -90, 180, 90]
+        '0_0': [-180, -90, 180, 90]
       };
     double startX = -180.0;
     double startY = 90.0;
@@ -59,7 +59,7 @@ class TileGenerator {
       double decrementByAlongY) {
     var tmp = <String, List<double>>{};
     for (var i = 0; i < tileCountAlongX; i++) {
-      tmp['$i-$yIndex'] = [
+      tmp['${i}_$yIndex'] = [
         startAtX,
         startAtY - decrementByAlongY,
         startAtX += incrementByAlongX,
