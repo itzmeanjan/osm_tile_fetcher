@@ -1,4 +1,3 @@
-// import 'dart:math' show Rectangle;
 import 'generator.dart';
 import 'dart:io';
 import 'dart:async' show Completer, StreamController;
