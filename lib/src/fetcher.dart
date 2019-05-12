@@ -1,5 +1,4 @@
 import 'bounding_box.dart';
-
 import 'generator.dart';
 import 'dart:io';
 import 'dart:async' show Completer, StreamController;
@@ -16,11 +15,11 @@ class TileFetcher {
   /// Helps in fetching tiles for a certain zoom level
   TileFetcher(this.zoomLevel, this.targetPath);
 
-  /// actual tile fetcher, for a certain zoom level fetches all tiles and stores them in targetDir, for caching purpose
-  Stream<String> fetchTiles(
-    BoundingBox areaToConsider, {
-    String baseURL = 'https://tile.openstreetmap.org/',
-  }) {
+  /// Tile fetcher, for a certain zoom level fetches all tiles and stores them in targetDir, for caching purpose
+  /// Works in a lazy fashion - if a certain tile is present in target directory and lazy is set to true, then it's not going to refetch that tile
+  /// To override this behavior, make sure you set lazy to false, while invoking method
+  Stream<String> fetchTiles(BoundingBox areaToConsider,
+      {String baseURL = 'https://tile.openstreetmap.org/', bool lazy = true}) {
     StreamController streamController;
     int count = 0;
 
@@ -36,42 +35,59 @@ class TileFetcher {
             // whether to fetch a tile or not, done here
             .map((String tileId, List<double> bounds) {
             if (areaToConsider.shouldFetchTile(
-                BoundingBox(bounds[0], bounds[1], bounds[2], bounds[3])))
+                BoundingBox(bounds[0], bounds[1], bounds[2], bounds[3]))) {
               return MapEntry(tileId, bounds);
+            }
           }).forEach(
-            (tileId, bounds) => _tileFetcher(
-                        '$baseURL/$zoomLevel/${tileId.split('_').join('/')}.png',
-                        join(targetPath,
-                            '${zoomLevel}_${tileId.split('_').join('_')}.png'))
-                    .then(
-                  (val) {
-                    count += 1;
-                    if (!streamController.isClosed ||
-                        !streamController.isPaused)
-                      streamController.add(val ? '${zoomLevel}_$tileId' : '');
-                    if (count ==
-                        TileGenerator(zoomLevel).tileCountInZoomLevel())
-                      streamController.close();
-                  },
-                ),
+            (tileId, bounds) {
+              if (lazy) if (File(join(targetPath, '${zoomLevel}_$tileId.png'))
+                  .existsSync()) {
+                count += 1;
+                if (!streamController.isClosed || !streamController.isPaused)
+                  streamController.add('${zoomLevel}_$tileId');
+                if (count == TileGenerator(zoomLevel).tileCountInZoomLevel())
+                  streamController.close();
+                return;
+              }
+              _tileFetcher(
+                      '$baseURL/$zoomLevel/${tileId.split('_').join('/')}.png',
+                      join(targetPath, '${zoomLevel}_$tileId.png'))
+                  .then(
+                (val) {
+                  count += 1;
+                  if (!streamController.isClosed || !streamController.isPaused)
+                    streamController.add(val ? '${zoomLevel}_$tileId' : '');
+                  if (count == TileGenerator(zoomLevel).tileCountInZoomLevel())
+                    streamController.close();
+                },
+              );
+            },
           )
         : TileGenerator(zoomLevel).tilesWithOutExtent().forEach(
-              (tileId) => _tileFetcher(
-                          '$baseURL/$zoomLevel/${tileId.split('_').join('/')}.png',
-                          join(targetPath,
-                              '${zoomLevel}_${tileId.split('_').join('_')}.png'))
-                      .then(
-                    (val) {
-                      count += 1;
-                      if (!streamController.isClosed ||
-                          !streamController.isPaused)
-                        streamController.add(val ? '${zoomLevel}_$tileId' : '');
-                      if (count ==
-                          TileGenerator(zoomLevel).tileCountInZoomLevel())
-                        streamController.close();
-                    },
-                  ),
-            );
+            (tileId) {
+              if (lazy) if (File(join(targetPath, '${zoomLevel}_$tileId.png'))
+                  .existsSync()) {
+                count += 1;
+                if (!streamController.isClosed || !streamController.isPaused)
+                  streamController.add('${zoomLevel}_$tileId');
+                if (count == TileGenerator(zoomLevel).tileCountInZoomLevel())
+                  streamController.close();
+                return;
+              }
+              _tileFetcher(
+                      '$baseURL/$zoomLevel/${tileId.split('_').join('/')}.png',
+                      join(targetPath, '${zoomLevel}_$tileId.png'))
+                  .then(
+                (val) {
+                  count += 1;
+                  if (!streamController.isClosed || !streamController.isPaused)
+                    streamController.add(val ? '${zoomLevel}_$tileId' : '');
+                  if (count == TileGenerator(zoomLevel).tileCountInZoomLevel())
+                    streamController.close();
+                },
+              );
+            },
+          );
     streamController = StreamController<String>(
       onCancel: close,
       onListen: init,
