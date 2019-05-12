@@ -30,16 +30,19 @@ class TileFetcher {
 
     /// initializes stream and sends success report back
     init() => areaToConsider != null
-        ? TileGenerator(zoomLevel).tilesWithExtent()
-            // this is where we perform the filtering of tiles
-            // whether to fetch a tile or not, done here
-            .map((String tileId, List<double> bounds) {
-            if (areaToConsider.shouldFetchTile(
-                BoundingBox(bounds[0], bounds[1], bounds[2], bounds[3]))) {
-              return MapEntry(tileId, bounds);
-            }
-          }).forEach(
+        ? TileGenerator(zoomLevel).tilesWithExtent().forEach(
             (tileId, bounds) {
+              if (!areaToConsider.shouldFetchTile(
+                  BoundingBox(bounds[0], bounds[1], bounds[2], bounds[3]))) {
+                // this is where we perform the filtering of tiles
+                // whether to fetch a tile or not, done here
+
+                count += 1;
+                if (count == TileGenerator(zoomLevel).tileCountInZoomLevel())
+                  streamController.close();
+                return;
+              }
+              // processing filtered tiles
               if (lazy) if (File(join(targetPath, '${zoomLevel}_$tileId.png'))
                   .existsSync()) {
                 count += 1;

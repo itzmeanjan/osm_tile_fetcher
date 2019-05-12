@@ -19,10 +19,11 @@ class BoundingBox {
     if (_containsBoundingBox(that))
       return true;
     else {
-      var intersection = _rectangleThis.intersection(rectangleThat);
-      return intersection == null
+      var box = _intersection(that);
+      return box == null
           ? false
-          : (intersection.width > 0 && intersection.height > 0);
+          : (_difference(box.minLongitude, box.maxLongitude) > 0 &&
+              _difference(box.maxLatitude, box.minLatitude) > 0);
     }
   }
 
@@ -33,16 +34,20 @@ class BoundingBox {
       maxLatitude >= that.maxLatitude &&
       minLatitude <= that.minLatitude;
 
+  /// Finds out intersection of two bounding boxes
+  /// If they don't intersect returns null
   BoundingBox _intersection(BoundingBox that) {
+    BoundingBox box;
     var x0 = max(minLongitude, that.minLongitude);
     var x1 = min(maxLongitude, that.maxLongitude);
     if (x0 <= x1) {
-      var y0 = min(minLatitude, that.minLatitude);
-      var y1 = max(maxLatitude, that.maxLatitude);
-      if (y0 >= y1) {
-        return BoundingBox();
-      }
-    } else
-      return null;
+      var y0 = max(minLatitude, that.minLatitude);
+      var y1 = min(maxLatitude, that.maxLatitude);
+      if (y0 <= y1) box = BoundingBox(x0, y0, x1, y1);
+    }
+    return box;
   }
+
+  /// Computes difference of two numbers
+  double _difference(double a, double b) => (a - b) < 0 ? -(a - b) : (a - b);
 }
