@@ -1,35 +1,14 @@
-import 'dart:math' show Rectangle, Point;
+import 'dart:math' show max, min;
 
 class BoundingBox {
   double minLongitude;
   double minLatitude;
   double maxLongitude;
   double maxLatitude;
-  Rectangle _rectangleThis;
 
   /// A bounding box represents a rectangular area by top left point and bottom right point
-  BoundingBox(this.minLongitude, this.minLatitude, this.maxLongitude,
-      this.maxLatitude) {
-    _rectangleThis = Rectangle(
-        minLongitude,
-        maxLatitude,
-        _difference(maxLongitude, minLongitude),
-        _difference(maxLatitude, minLatitude));
-  }
-
-  /// Creates a boundingBox instance from a point, which is considered to be center of box
-  /// Both width and height are required
-  BoundingBox.fromCenter(Point centerLocation, double width, double height) {
-    minLongitude = centerLocation.x - width / 2;
-    minLatitude = centerLocation.y - height / 2;
-    maxLongitude = centerLocation.x + width / 2;
-    maxLatitude = centerLocation.y + height / 2;
-    _rectangleThis = Rectangle(
-        minLongitude,
-        maxLatitude,
-        _difference(maxLongitude, minLongitude),
-        _difference(maxLatitude, minLatitude));
-  }
+  BoundingBox(
+      this.minLongitude, this.minLatitude, this.maxLongitude, this.maxLatitude);
 
   /// Decides whether to fetch a certain tile or not
   /// Tiles are represented in form of boundinb box
@@ -37,12 +16,7 @@ class BoundingBox {
   /// If yes, okay, else we check intersection of two rectangles
   /// If they intersect and insection rectangle has both width and height greater than 0, we ask to fetch that tile
   bool shouldFetchTile(BoundingBox that) {
-    var rectangleThat = Rectangle(
-        that.minLongitude,
-        that.maxLatitude,
-        _difference(that.maxLongitude, that.minLongitude),
-        _difference(that.maxLatitude, that.minLatitude));
-    if (_containsRectangle(rectangleThat))
+    if (_containsBoundingBox(that))
       return true;
     else {
       var intersection = _rectangleThis.intersection(rectangleThat);
@@ -52,21 +26,23 @@ class BoundingBox {
     }
   }
 
-  /// whether this rectangle contains that rectangle or not
-  bool _containsRectangle(Rectangle that) {
-    return _rectangleThis.left <= that.left &&
-        _rectangleThis.left + _rectangleThis.width >= that.left + that.width &&
-        _rectangleThis.top >= that.top &&
-        _rectangleThis.top - _rectangleThis.height <= that.top - that.height;
-  }
+  /// Checks whether this bounding box hold that or not
+  bool _containsBoundingBox(BoundingBox that) =>
+      minLongitude <= that.minLongitude &&
+      maxLongitude >= that.maxLongitude &&
+      maxLatitude >= that.maxLatitude &&
+      minLatitude <= that.minLatitude;
 
-  /// Computes difference between two numbers
-  /// e.g. difference between -2 and 2 = 4
-  double _difference(double a, double b) {
-    num res = a - b;
-    return res < 0 ? -res : res;
+  BoundingBox _intersection(BoundingBox that) {
+    var x0 = max(minLongitude, that.minLongitude);
+    var x1 = min(maxLongitude, that.maxLongitude);
+    if (x0 <= x1) {
+      var y0 = min(minLatitude, that.minLatitude);
+      var y1 = max(maxLatitude, that.maxLatitude);
+      if (y0 >= y1) {
+        return BoundingBox();
+      }
+    } else
+      return null;
   }
-
-  /// Checks whether this tile contains a certain point or not
-  bool holdsPoint(Point location) => _rectangleThis.containsPoint(location);
 }
