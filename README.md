@@ -1,6 +1,8 @@
 # osm_tile_fetcher
 A Dart Implementation of Open Street Map Tile Fetcher.
 
+This package is ready for download and use, check [here](https://pub.dev/packages/osm_tile_fetcher).
+
 ## purpose
 This *Dart* package can be used for fetching tiles from Open Street Map Tile Server. You can select a certain area on Earth Surface and it fetches only those tiles required to cover that area.
 
@@ -122,3 +124,5 @@ BoundingBox(-180, -90, 180, 90)
 
 ## end
 Well that's it. Hope it helps :)
+
+And you may be interested in showing some <3 to this venture, by putting * on [Github](https://github.com/itzmeanjan/osm_tile_fetcher).
