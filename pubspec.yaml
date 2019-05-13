@@ -2,6 +2,7 @@ name: osm_tile_fetcher
 version: 1.0.0
 description: A Dart implementation of Open Street Map Tile Fetcher
 author: Anjan Roy <anjanroy@yandex.com>
+homepage: https://github.com/itzmeanjan/osm_tile_fetcher/
 repository: https://github.com/itzmeanjan/osm_tile_fetcher/
 publish_to: https://pub.dev/
 environment:
