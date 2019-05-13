@@ -1,3 +1,5 @@
+import 'package:path/path.dart';
+
 import 'bounding_box.dart';
 import 'generator.dart';
 import 'dart:io';
@@ -36,7 +38,6 @@ class TileFetcher {
                   BoundingBox(bounds[0], bounds[1], bounds[2], bounds[3]))) {
                 // this is where we perform the filtering of tiles
                 // whether to fetch a tile or not, done here
-
                 count += 1;
                 if (count == TileGenerator(zoomLevel).tileCountInZoomLevel())
                   streamController.close();
@@ -98,14 +99,26 @@ class TileFetcher {
     return streamController.stream;
   }
 
-  /// generates target URLs only, for a certain zoom level
-  List<String> urlGenerator(
+  /// Generates target URLs only, for a certain zoom level
+  /// If areaToConsider is provided, it simply generates those urls covering area provided
+  List<String> urlGenerator(BoundingBox areaToConsider,
           {String baseURL = 'https://tile.openstreetmap.org'}) =>
-      TileGenerator(zoomLevel)
-          .tilesWithOutExtent()
-          .map((String tileId) =>
-              '$baseURL/$zoomLevel/${tileId.split('_').join('/')}.png')
-          .toList();
+      areaToConsider != null
+          ? TileGenerator(zoomLevel)
+              .tilesWithExtent()
+              .map((tileId, bounds) => areaToConsider.shouldFetchTile(
+                      BoundingBox(bounds[0], bounds[1], bounds[2], bounds[3]))
+                  ? MapEntry(tileId,
+                      '$baseURL/$zoomLevel/${tileId.split('_').join('/')}.png')
+                  : MapEntry(tileId, null))
+              .values
+              .where((url) => url != null)
+              .toList()
+          : TileGenerator(zoomLevel)
+              .tilesWithOutExtent()
+              .map((String tileId) =>
+                  '$baseURL/$zoomLevel/${tileId.split('_').join('/')}.png')
+              .toList();
 
   /// fetches a tile from OSM and then stores in target file, when completes returns status of operation by a boolean value
   /// true --> success
