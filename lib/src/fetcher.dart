@@ -1,3 +1,4 @@
+import 'package:collection/collection.dart' show IterableNullableExtension;
 import 'package:path/path.dart';
 
 import 'bounding_box.dart';
@@ -20,9 +21,9 @@ class TileFetcher {
   /// Tile fetcher, for a certain zoom level fetches all tiles and stores them in targetDir, for caching purpose
   /// Works in a lazy fashion - if a certain tile is present in target directory and lazy is set to true, then it's not going to refetch that tile
   /// To override this behavior, make sure you set lazy to false, while invoking method
-  Stream<String> fetchTiles(BoundingBox areaToConsider,
+  Stream<String> fetchTiles(BoundingBox? areaToConsider,
       {String baseURL = 'https://tile.openstreetmap.org/', bool lazy = true}) {
-    StreamController streamController;
+    late StreamController streamController;
     int count = 0;
 
     /// closes stream of data
@@ -96,12 +97,12 @@ class TileFetcher {
       onCancel: close,
       onListen: init,
     );
-    return streamController.stream;
+    return streamController.stream as Stream<String>;
   }
 
   /// Generates target URLs only, for a certain zoom level
   /// If areaToConsider is provided, it simply generates those urls covering area provided
-  List<String> urlGenerator(BoundingBox areaToConsider,
+  List<String?> urlGenerator(BoundingBox? areaToConsider,
           {String baseURL = 'https://tile.openstreetmap.org'}) =>
       areaToConsider != null
           ? TileGenerator(zoomLevel)
@@ -112,7 +113,7 @@ class TileFetcher {
                       '$baseURL/$zoomLevel/${tileId.split('_').join('/')}.png')
                   : MapEntry(tileId, null))
               .values
-              .where((url) => url != null)
+              .whereNotNull()
               .toList()
           : TileGenerator(zoomLevel)
               .tilesWithOutExtent()

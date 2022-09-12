@@ -36,8 +36,8 @@ class BoundingBox {
 
   /// Finds out intersection of two bounding boxes
   /// If they don't intersect returns null
-  BoundingBox _intersection(BoundingBox that) {
-    BoundingBox box;
+  BoundingBox? _intersection(BoundingBox that) {
+    BoundingBox? box;
     var x0 = max(minLongitude, that.minLongitude);
     var x1 = min(maxLongitude, that.maxLongitude);
     if (x0 <= x1) {

@@ -7,7 +7,7 @@ class TileGenerator {
   TileGenerator(this.zoomLevel);
 
   /// Gives number of tiles to be present in a certain zoom level
-  int tileCountInZoomLevel() => pow(2 * 2, zoomLevel);
+  int tileCountInZoomLevel() => pow(2 * 2, zoomLevel) as int;
 
   /// Generates only tile identifiers without extent value
   /// Simply a List<String> is returned, where each entry of List is a String, identifies a certain tile
